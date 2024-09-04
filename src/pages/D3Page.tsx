@@ -4,8 +4,8 @@ import * as d3 from "d3";
 interface DataItem {
   id: number;
   name: string;
-  start: Date;
-  end: Date;
+  start: string;
+  end: string;
 }
 
 interface D3GanttChartProps {
@@ -13,30 +13,17 @@ interface D3GanttChartProps {
 }
 
 // Adjust the height for a smaller chart
-const margin = { top: 20, right: 30, bottom: 60, left: 75 };
+const margin = { top: 20, right: 30, bottom: 60, left: 100 };
 const width = 960 - margin.left - margin.right;
 const height = 300 - margin.top - margin.bottom; // Smaller height
 
-// Material Design color palette
+// Extended color palette
 const materialColors = [
-  "#F44336",
-  "#E91E63",
-  "#9C27B0",
-  "#673AB7",
-  "#3F51B5",
-  "#2196F3",
-  "#03A9F4",
-  "#00BCD4",
-  "#009688",
-  "#4CAF50",
-  "#8BC34A",
-  "#CDDC39",
-  "#FFC107",
-  "#FF9800",
-  "#FF5722",
-  "#795548",
-  "#9E9E9E",
-  "#607D8B",
+  "#4A90E2", "#50E3C2", "#7ED321", "#F5A623", "#D0021B", "#B8E986", 
+  "#BD10E0", "#F8E71C", "#B0BEC5", "#FF9800", "#009688", "#795548", 
+  "#9C27B0", "#FF5722", "#4CAF50", "#FFC107", "#673AB7", "#03A9F4", 
+  "#E91E63", "#3F51B5", "#8BC34A", "#FFEB3B", "#00BCD4", "#607D8B", 
+  "#9E9E9E", "#F44336",
 ];
 
 const usedColors = new Set<string>();
@@ -56,6 +43,14 @@ const getUniqueMaterialColor = () => {
   return color;
 };
 
+// Helper function to calculate duration
+const getDuration = (start: string, end: string) => {
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  return `${duration}d`;
+};
+
 const D3Page: React.FC<D3GanttChartProps> = ({ data }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
 
@@ -73,8 +68,8 @@ const D3Page: React.FC<D3GanttChartProps> = ({ data }) => {
     const xScale = d3
       .scaleTime()
       .domain([
-        d3.min(data, (d) => d.start) as Date,
-        d3.max(data, (d) => d.end) as Date,
+        d3.min(data, (d) => new Date(d.start)) as Date,
+        d3.max(data, (d) => new Date(d.end)) as Date,
       ])
       .range([0, width]);
 
@@ -92,13 +87,33 @@ const D3Page: React.FC<D3GanttChartProps> = ({ data }) => {
       .data(data)
       .enter()
       .append("rect")
-      .attr("x", (d) => xScale(d.start))
+      .attr("x", (d) => xScale(new Date(d.start)))
       .attr("y", (d) => yScale(d.name)!)
-      .attr("width", (d) => xScale(d.end) - xScale(d.start))
-      .attr("height", yScale.bandwidth()) // Ensure bars fit within smaller height
-      .attr("fill", getUniqueMaterialColor); // Use unique Material Design colors
+      .attr("width", (d) => xScale(new Date(d.end)) - xScale(new Date(d.start)))
+      .attr("height", yScale.bandwidth())
+      .attr("fill", getUniqueMaterialColor) // Use unique Material Design colors
+      .attr("rx", 5) // Add rounded corners
+      .attr("ry", 5) // Add rounded corners
+      .transition()
+      .duration(500) // Smooth transition
+      .attr("fill-opacity", 0.8);
 
-    // X axis with monthly ticks
+    // Append text for durations
+    // svg
+    //   .append("g")
+    //   .selectAll("text")
+    //   .data(data)
+    //   .enter()
+    //   .append("text")
+    //   .attr("x", (d) => xScale(new Date(d.start)) + (xScale(new Date(d.end)) - xScale(new Date(d.start))) / 2)
+    //   .attr("y", (d) => yScale(d.name)! + yScale.bandwidth() / 2)
+    //   .attr("text-anchor", "middle")
+    //   .attr("alignment-baseline", "central")
+    //   .style("font-size", "12px") // Modern font size
+    //   .style("fill", "#fff") // Text color (white for contrast)
+    //   .text((d) => getDuration(d.start, d.end)); // Display duration
+
+    // X axis with custom monthly ticks
     svg
       .append("g")
       .attr("class", "x-axis")
@@ -109,20 +124,34 @@ const D3Page: React.FC<D3GanttChartProps> = ({ data }) => {
           .ticks(d3.timeMonth.every(1)) // Show ticks every month
           .tickFormat((domainValue: Date | d3.NumberValue) => {
             if (domainValue instanceof Date) {
-              return d3.timeFormat("%b %Y")(domainValue);
+              const monthFormat = d3.timeFormat("%b"); // Abbreviated month
+              const yearFormat = d3.timeFormat("%y"); // Last two digits of the year
+              return `${monthFormat(domainValue)} ${yearFormat(domainValue)}`;
             } else {
               return ""; // Handle number case if needed
             }
           })
-      );
+      )
+      .selectAll("text")
+      .style("font-size", "12px") // Modern font size
+      .style("fill", "#333") // Modern color
+      .style("text-anchor", "middle"); // Center align text
 
     // Y axis
-    svg.append("g").attr("class", "y-axis").call(d3.axisLeft(yScale));
+    svg
+      .append("g")
+      .attr("class", "y-axis")
+      .call(d3.axisLeft(yScale))
+      .selectAll("text")
+      .style("font-size", "12px") // Modern font size
+      .style("fill", "#333"); // Modern color
 
+    // Rotate X axis labels for better readability
     svg
       .selectAll(".x-axis text")
-      .attr("transform", "rotate(-45)")
+      .attr("transform", "rotate(-25)")
       .style("text-anchor", "end");
+
   }, [data]);
 
   return (

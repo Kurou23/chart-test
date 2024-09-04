@@ -9,22 +9,42 @@ const data = [
   {
     id: 1,
     name: "Sisfo CE",
-    start: new Date(2024, 1, 1),
-    end: new Date(2024, 6, 1),
+    start: "2024-01-15", // ISO date string for January 15, 2024
+    end: "2024-03-25",   // ISO date string for March 25, 2024
   },
   {
     id: 2,
     name: "Sisfo PS",
-    start: new Date(2024, 6, 1),
-    end: new Date(2024, 12, 1),
+    start: "2024-06-15",
+    end: "2024-11-15",
   },
   {
     id: 3,
     name: "Binus Center",
-    start: new Date(2024, 10, 1),
-    end: new Date(2025, 6, 1),
+    start: "2024-05-12",
+    end:  "2024-07-15",
+  },
+  {
+    id: 4,
+    name: "Task 4",
+    start: "2025-01-12",
+    end: "2025-04-23",
+  },
+  {
+    id: 5,
+    name: "Task 5",
+    start: "2024-10-01",
+    end: "2025-05-15",
+  },
+  {
+    id: 6,
+    name: "Task 6",
+    start: "2025-04-01",
+    end: "2025-06-01",
   },
 ];
+
+// console.log(data);
 
 const App: React.FC = () => {
   return (
@@ -42,7 +62,7 @@ const App: React.FC = () => {
               <Link to="/d3">D3.js</Link>
             </li>
             <li>
-              <Link to="/dhtml">Ant Design Chart</Link>
+              <Link to="/dhtml">Dhtmlx Chart</Link>
             </li>
           </ul>
         </nav>
@@ -53,6 +73,7 @@ const App: React.FC = () => {
             path="/google-charts"
             element={<GoogleChartsPage tasks={data} />}
           />
+         
           <Route path="/d3" element={<D3Page data={data} />} />
           <Route path="/dhtml" element={<DhtmlxGanttPage tasks={data} />} />
         </Routes>

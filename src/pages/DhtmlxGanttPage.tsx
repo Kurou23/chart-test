@@ -6,8 +6,8 @@ import { gantt } from "dhtmlx-gantt";
 interface Task {
   id: number;
   name: string;
-  start: Date;
-  end: Date;
+  start: string;
+  end: string;
 }
 
 interface DhtmlxGanttChartProps {
@@ -26,10 +26,10 @@ const transformData = (tasks: Task[]) => {
     data: tasks.map((task) => ({
       id: task.id,
       text: task.name,
-      start_date: formatDate(task.start),
-      end_date: formatDate(task.end),
+      start_date: formatDate(new Date(task.start)),
+      end_date: formatDate(new Date(task.end)),
       duration: 0,
-      progress: 0.5,
+      progress: Math.random(),
       dependencies: null,
     })),
     links: [],
