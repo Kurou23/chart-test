@@ -113,6 +113,32 @@ const D3Page: React.FC<D3GanttChartProps> = ({ data }) => {
     //   .style("fill", "#fff") // Text color (white for contrast)
     //   .text((d) => getDuration(d.start, d.end)); // Display duration
 
+     // Current time point
+     const now = new Date();
+     const currentX = xScale(now);
+ 
+   // Add vertical line for current time
+    svg
+    .append("line")
+    .attr("x1", currentX)
+    .attr("x2", currentX)
+    .attr("y1", 0)
+    .attr("y2", height)
+    .attr("stroke", "#FF5722") // Red color for current time line
+    .attr("stroke-width", 2)
+    .attr("stroke-dasharray", "4,4"); // Dashed line style
+
+    // Add text label for current time above the chart
+    svg
+    .append("text")
+    .attr("x", currentX)
+    .attr("y", -10) // Position above the chart
+    .attr("text-anchor", "middle")
+    .style("font-size", "12px") // Modern font size
+    .style("fill", "#FF5722") // Red color for text
+    .text(`Now : ${d3.timeFormat("%b %d, %Y")(now)}`);
+
+
     // X axis with custom monthly ticks
     svg
       .append("g")
@@ -145,12 +171,13 @@ const D3Page: React.FC<D3GanttChartProps> = ({ data }) => {
       .selectAll("text")
       .style("font-size", "12px") // Modern font size
       .style("fill", "#333"); // Modern color
+      
 
     // Rotate X axis labels for better readability
-    svg
-      .selectAll(".x-axis text")
-      .attr("transform", "rotate(-25)")
-      .style("text-anchor", "end");
+    // svg
+    //   .selectAll(".x-axis text")
+    //   .attr("transform", "rotate(-0)")
+    //   .style("text-anchor", "end");
 
   }, [data]);
 
