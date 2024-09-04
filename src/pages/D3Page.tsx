@@ -12,26 +12,44 @@ interface D3GanttChartProps {
   data: DataItem[];
 }
 
-// Adjust the height for a smaller chart
 const margin = { top: 20, right: 30, bottom: 60, left: 100 };
 const width = 960 - margin.left - margin.right;
-const height = 300 - margin.top - margin.bottom; // Smaller height
+const height = 250 - margin.top - margin.bottom;
 
-// Extended color palette
 const materialColors = [
-  "#4A90E2", "#50E3C2", "#7ED321", "#F5A623", "#D0021B", "#B8E986", 
-  "#BD10E0", "#F8E71C", "#B0BEC5", "#FF9800", "#009688", "#795548", 
-  "#9C27B0", "#FF5722", "#4CAF50", "#FFC107", "#673AB7", "#03A9F4", 
-  "#E91E63", "#3F51B5", "#8BC34A", "#FFEB3B", "#00BCD4", "#607D8B", 
-  "#9E9E9E", "#F44336",
+  "#4A90E2",
+  "#50E3C2",
+  "#7ED321",
+  "#F5A623",
+  "#D0021B",
+  "#B8E986",
+  "#BD10E0",
+  "#F8E71C",
+  "#B0BEC5",
+  "#FF9800",
+  "#009688",
+  "#795548",
+  "#9C27B0",
+  "#FF5722",
+  "#4CAF50",
+  "#FFC107",
+  "#673AB7",
+  "#03A9F4",
+  "#E91E63",
+  "#3F51B5",
+  "#8BC34A",
+  "#FFEB3B",
+  "#00BCD4",
+  "#607D8B",
+  "#9E9E9E",
+  "#F44336",
 ];
 
 const usedColors = new Set<string>();
 
-// Function to get a unique Material Design color
 const getUniqueMaterialColor = () => {
   if (usedColors.size >= materialColors.length) {
-    usedColors.clear(); // Reset the set if all colors have been used
+    usedColors.clear();
   }
 
   let color: string;
@@ -43,11 +61,12 @@ const getUniqueMaterialColor = () => {
   return color;
 };
 
-// Helper function to calculate duration
 const getDuration = (start: string, end: string) => {
   const startDate = new Date(start);
   const endDate = new Date(end);
-  const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  const duration = Math.ceil(
+    (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+  );
   return `${duration}d`;
 };
 
@@ -64,23 +83,35 @@ const D3Page: React.FC<D3GanttChartProps> = ({ data }) => {
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    // X scale for time
+    const now = new Date();
+    const minStartDate = d3.min(data, (d) => new Date(d.start)) as Date;
+    const maxEndDate = d3.max(data, (d) => new Date(d.end)) as Date;
+
+    // Adjust X scale to include the current date if it is earlier than the earliest start date
     const xScale = d3
       .scaleTime()
-      .domain([
-        d3.min(data, (d) => new Date(d.start)) as Date,
-        d3.max(data, (d) => new Date(d.end)) as Date,
-      ])
+      .domain([d3.min([minStartDate, now]) as Date, maxEndDate])
       .range([0, width]);
 
-    // Y scale for task names
     const yScale = d3
       .scaleBand()
       .domain(data.map((d) => d.name))
       .range([0, height])
-      .padding(0.3); // Adjust padding to fit within smaller height
+      .padding(0.1); // Remove padding to close the gap for the entire row
 
-    // Append bars for tasks
+    // Apply zebra striping effect
+    svg
+      .selectAll(".zebra-row")
+      .data(data)
+      .enter()
+      .append("rect")
+      .attr("class", "zebra-row")
+      .attr("x", 0)
+      .attr("y", (d) => yScale(d.name)!)
+      .attr("width", width)
+      .attr("height", yScale.bandwidth())
+      .attr("fill", (d, i) => (i % 2 === 0 ? "#f9f9f9" : "#ececec")); // Alternating colors
+
     svg
       .append("g")
       .selectAll("rect")
@@ -91,55 +122,35 @@ const D3Page: React.FC<D3GanttChartProps> = ({ data }) => {
       .attr("y", (d) => yScale(d.name)!)
       .attr("width", (d) => xScale(new Date(d.end)) - xScale(new Date(d.start)))
       .attr("height", yScale.bandwidth())
-      .attr("fill", getUniqueMaterialColor) // Use unique Material Design colors
-      .attr("rx", 5) // Add rounded corners
-      .attr("ry", 5) // Add rounded corners
+      .attr("fill", getUniqueMaterialColor)
+      .attr("rx", yScale.bandwidth() / 2) // Increase rounding
+      .attr("ry", yScale.bandwidth() / 2) // Increase rounding
       .transition()
-      .duration(500) // Smooth transition
+      .duration(500)
       .attr("fill-opacity", 0.8);
 
-    // Append text for durations
-    // svg
-    //   .append("g")
-    //   .selectAll("text")
-    //   .data(data)
-    //   .enter()
-    //   .append("text")
-    //   .attr("x", (d) => xScale(new Date(d.start)) + (xScale(new Date(d.end)) - xScale(new Date(d.start))) / 2)
-    //   .attr("y", (d) => yScale(d.name)! + yScale.bandwidth() / 2)
-    //   .attr("text-anchor", "middle")
-    //   .attr("alignment-baseline", "central")
-    //   .style("font-size", "12px") // Modern font size
-    //   .style("fill", "#fff") // Text color (white for contrast)
-    //   .text((d) => getDuration(d.start, d.end)); // Display duration
+    const currentX = xScale(now);
 
-     // Current time point
-     const now = new Date();
-     const currentX = xScale(now);
- 
-   // Add vertical line for current time
     svg
-    .append("line")
-    .attr("x1", currentX)
-    .attr("x2", currentX)
-    .attr("y1", 0)
-    .attr("y2", height)
-    .attr("stroke", "#FF5722") // Red color for current time line
-    .attr("stroke-width", 2)
-    .attr("stroke-dasharray", "4,4"); // Dashed line style
+      .append("line")
+      .attr("x1", currentX)
+      .attr("x2", currentX)
+      .attr("y1", 0)
+      .attr("y2", height)
+      .attr("stroke", "#FF5722")
+      .attr("stroke-width", 2)
+      .attr("stroke-dasharray", "4,4");
 
-    // Add text label for current time above the chart
     svg
-    .append("text")
-    .attr("x", currentX)
-    .attr("y", -10) // Position above the chart
-    .attr("text-anchor", "middle")
-    .style("font-size", "12px") // Modern font size
-    .style("fill", "#FF5722") // Red color for text
-    .text(`Now : ${d3.timeFormat("%b %d, %Y")(now)}`);
+      .append("text")
+      .attr("x", currentX)
+      .attr("y", -10)
+      .attr("text-anchor", "middle")
+      .style("font-size", "12px")
+      .style("fill", "#FF5722")
+      .style("font-weight", "bold") // Make the text bold
+      .text(`Now : ${d3.timeFormat("%b %d, %Y")(now)}`);
 
-
-    // X axis with custom monthly ticks
     svg
       .append("g")
       .attr("class", "x-axis")
@@ -147,38 +158,29 @@ const D3Page: React.FC<D3GanttChartProps> = ({ data }) => {
       .call(
         d3
           .axisBottom(xScale)
-          .ticks(d3.timeMonth.every(1)) // Show ticks every month
+          .ticks(d3.timeMonth.every(1))
           .tickFormat((domainValue: Date | d3.NumberValue) => {
             if (domainValue instanceof Date) {
-              const monthFormat = d3.timeFormat("%b"); // Abbreviated month
-              const yearFormat = d3.timeFormat("%y"); // Last two digits of the year
+              const monthFormat = d3.timeFormat("%b");
+              const yearFormat = d3.timeFormat("%y");
               return `${monthFormat(domainValue)} ${yearFormat(domainValue)}`;
             } else {
-              return ""; // Handle number case if needed
+              return "";
             }
           })
       )
       .selectAll("text")
-      .style("font-size", "12px") // Modern font size
-      .style("fill", "#333") // Modern color
-      .style("text-anchor", "middle"); // Center align text
+      .style("font-size", "12px")
+      .style("fill", "#333")
+      .style("text-anchor", "middle");
 
-    // Y axis
     svg
       .append("g")
       .attr("class", "y-axis")
       .call(d3.axisLeft(yScale))
       .selectAll("text")
-      .style("font-size", "12px") // Modern font size
-      .style("fill", "#333"); // Modern color
-      
-
-    // Rotate X axis labels for better readability
-    // svg
-    //   .selectAll(".x-axis text")
-    //   .attr("transform", "rotate(-0)")
-    //   .style("text-anchor", "end");
-
+      .style("font-size", "12px")
+      .style("fill", "#333");
   }, [data]);
 
   return (
